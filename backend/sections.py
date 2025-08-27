@@ -32,20 +32,81 @@ def find_page_of_label(manifest, doc_file: str, label_substring: str):
 def search_all_sections(manifest, query: str):
     """Search across all documents for sections matching the query."""
     results = []
-    query_lower = query.lower()
+    query_lower = query.lower().strip()
+    
+    # Define style patterns for better matching
+    style_patterns = {
+        'greek': 'greek revival',
+        'gothic': 'gothic revival', 
+        'art deco': 'art deco',
+        'streamline': 'streamline moderne',
+        'international': 'international style',
+        'queen anne': 'queen anne',
+        'italianate': 'italianate',
+        'second empire': 'second empire',
+        'stick': 'stick/eastlake',
+        'eastlake': 'stick/eastlake',
+        'folk victorian': 'folk victorian',
+        'neoclassical': 'neoclassical',
+        'colonial': 'colonial revival',
+        'tudor': 'tudor revival',
+        'spanish': 'spanish colonial revival',
+        'mission': 'mission revival',
+        'craftsman': 'craftsman',
+        'bungalow': 'bungalow',
+        'prairie': 'prairie school',
+        'art moderne': 'art moderne',
+        'moderne': 'art moderne',
+        'bauhaus': 'bauhaus',
+        'mid century': 'mid-century modern',
+        'mid-century': 'mid-century modern',
+        'brutalist': 'brutalist',
+        'new formalism': 'new formalism',
+        'postmodern': 'postmodern'
+    }
+    
+    # Check if query matches a style pattern
+    expanded_query = query_lower
+    for pattern, full_style in style_patterns.items():
+        if pattern in query_lower:
+            expanded_query = full_style
+            break
     
     for doc_file, data in manifest.items():
         for section in data.get("sections", []):
-            if query_lower in section["label"].lower():
+            section_label_lower = section["label"].lower()
+            
+            # Calculate relevance score
+            score = 0.0
+            
+            # Exact match gets highest score
+            if query_lower == section_label_lower:
+                score = 10.0
+            # Full style name match
+            elif expanded_query in section_label_lower:
+                score = 8.0
+            # Partial match
+            elif query_lower in section_label_lower:
+                score = 5.0
+            # Style pattern match
+            elif any(pattern in section_label_lower for pattern in style_patterns.keys() if pattern in query_lower):
+                score = 3.0
+            
+            # Boost evaluation criteria sections
+            if 'evaluation criteria' in section_label_lower:
+                score += 2.0
+            
+            # Only include results with meaningful matches
+            if score > 0:
                 results.append({
                     "doc_file": doc_file,
                     "doc_title": data["title"],
                     "section_label": section["label"],
                     "page": section["start"],
-                    "score": 1.0 if query_lower == section["label"].lower() else 0.8
+                    "score": score
                 })
     
-    # Sort by relevance (exact matches first)
+    # Sort by relevance score (highest first)
     return sorted(results, key=lambda x: (-x["score"], x["page"]))
 
 # Test function

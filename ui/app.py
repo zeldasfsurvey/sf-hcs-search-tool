@@ -136,95 +136,62 @@ def main():
     # Show stats
     total_sections = sum(len(doc.get('sections', [])) for doc in manifest.values())
     
-    # Two column layout
-    col1, col2 = st.columns([2, 1])
+    st.subheader("🔍 Search by Style or Keywords")
     
-    with col1:
-        st.subheader("🔍 Search by Style or Keywords")
-        
-        # Search input
-        query = st.text_input(
-            "Search for architectural styles, themes, or evaluation criteria:",
-            placeholder="e.g., Gothic Revival, Art Deco, Streamline Moderne..."
-        )
-        
-        if query:
-            # Search across all sections
-            results = search_all_sections(manifest, query)
-            
-            if results:
-                st.write(f"Found **{len(results)}** relevant sections:")
-                
-                # Show results as cards with open buttons
-                for i, result in enumerate(results[:10]):  # Limit to top 10
-                    with st.container():
-                        col_text, col_button = st.columns([3, 1])
-                        
-                        with col_text:
-                            # Clean up the document title for display
-                            doc_title = result['doc_title']
-                            doc_title = doc_title.replace('%20', ' ').replace('%26', '&')
-                            st.markdown(f"**{doc_title}**")
-                            st.markdown(f"*{result['section_label']}* (Page {result['page']})")
-                            
-                        with col_button:
-                            url = viewer_url(result['doc_file'], result['page'])
-                            st.link_button("📖 Open Section", url, use_container_width=True)
-                        
-                        if i < len(results) - 1:
-                            st.divider()
-            else:
-                st.info("No matching sections found. Try different keywords or browse the document list below.")
-                
-                # Show all available sections as fallback
-                st.subheader("📚 All Available Sections")
-                for doc_file, doc_data in list(manifest.items())[:3]:  # Show first 3 docs
-                    with st.expander(f"📄 {doc_data['title']}"):
-                        for section in doc_data.get('sections', [])[:10]:  # Show first 10 sections
-                            col_text, col_btn = st.columns([4, 1])
-                            with col_text:
-                                st.write(f"• {section['label']} (p.{section['start']})")
-                            with col_btn:
-                                url = viewer_url(doc_file, section['start'])
-                                st.link_button("Open", url)
+    # Search input
+    query = st.text_input(
+        "Search for architectural styles, themes, or evaluation criteria:",
+        placeholder="e.g., Greek Revival, Art Deco, Streamline Moderne..."
+    )
     
-    with col2:
-        st.subheader("🎯 Quick Style Lookup")
+    if query:
+        # Search across all sections with improved logic
+        results = search_all_sections(manifest, query)
         
-        if not frameworks_df.empty:
-            # Style selection
-            available_styles = sorted(frameworks_df['style'].unique())
-            style = st.selectbox("Select architectural style:", [""] + available_styles)
+        if results:
+            st.write(f"Found **{len(results)}** relevant sections:")
             
-            # Year input
-            year = st.number_input("Year built:", min_value=1800, max_value=2024, value=1900)
-            
-            if style:
-                dest = resolve_style_year(manifest, frameworks_df, style, year)
-                
-                if dest:
-                    st.success(f"Found: **{dest['style']}** ({dest['period']})")
-                    st.write(f"📄 Document: *{dest['doc_file'].replace('.pdf', '')}*")
-                    st.write(f"📍 Section: *{dest['section_label']}*")
+            # Show results as cards with open buttons
+            for i, result in enumerate(results[:10]):  # Limit to top 10
+                with st.container():
+                    col_text, col_button = st.columns([3, 1])
                     
-                    # Big open button
-                    url = viewer_url(dest['doc_file'], dest['page'])
-                    st.link_button(
-                        f"🚀 Open {dest['style']} (p.{dest['page']})",
-                        url,
-                        use_container_width=True,
-                        type="primary"
-                    )
-                else:
-                    st.warning(f"No evaluation criteria found for **{style}** in {year}. Try searching by keywords instead.")
-        
-        st.markdown("---")
-        st.markdown("**📊 Current Status:**")
-        st.info(f"✅ **{len(manifest)} documents** loaded")
-        st.info(f"✅ **{total_sections} sections** indexed")
-        
-        if not frameworks_df.empty:
-            st.info(f"✅ **{len(frameworks_df)} styles** configured")
+                    with col_text:
+                        # Clean up the document title for display
+                        doc_title = result['doc_title']
+                        doc_title = doc_title.replace('%20', ' ').replace('%26', '&').replace('%2D', '-')
+                        st.markdown(f"**{doc_title}**")
+                        st.markdown(f"*{result['section_label']}* (Page {result['page']})")
+                        
+                    with col_button:
+                        url = viewer_url(result['doc_file'], result['page'])
+                        st.link_button("📖 Open Section", url, use_container_width=True)
+                    
+                    if i < len(results) - 1:
+                        st.divider()
+        else:
+            st.info("No matching sections found. Try different keywords or browse the document list below.")
+            
+            # Show all available sections as fallback
+            st.subheader("📚 All Available Sections")
+            for doc_file, doc_data in list(manifest.items())[:3]:  # Show first 3 docs
+                with st.expander(f"📄 {doc_data['title']}"):
+                    for section in doc_data.get('sections', [])[:10]:  # Show first 10 sections
+                        col_text, col_btn = st.columns([4, 1])
+                        with col_text:
+                            st.write(f"• {section['label']} (p.{section['start']})")
+                        with col_btn:
+                            url = viewer_url(doc_file, section['start'])
+                            st.link_button("Open", url)
+    
+    # Status section at bottom
+    st.markdown("---")
+    st.markdown("**📊 Current Status:**")
+    st.info(f"✅ **{len(manifest)} documents** loaded")
+    st.info(f"✅ **{total_sections} sections** indexed")
+    
+    if not frameworks_df.empty:
+        st.info(f"✅ **{len(frameworks_df)} styles** configured")
     
     # Footer
     st.markdown("---")
