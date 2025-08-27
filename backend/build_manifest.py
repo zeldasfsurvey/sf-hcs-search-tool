@@ -72,7 +72,9 @@ def parse_toc_lines(text: str):
     Return list of (label, page).
     """
     out = []
-    for raw in text.splitlines():
+    lines = text.splitlines()
+    
+    for i, raw in enumerate(lines):
         line = raw.strip()
         if not line:
             continue
@@ -89,14 +91,19 @@ def parse_toc_lines(text: str):
                 label = m.group(1).strip()
                 page = int(m.group(2))
             else:
-                continue
+                # Pattern 3: Check if next line is a page number
+                if i + 1 < len(lines) and re.match(r"^\d+$", lines[i + 1].strip()):
+                    label = line
+                    page = int(lines[i + 1].strip())
+                else:
+                    continue
         
         # Clean up label
         label = re.sub(r'\s+', ' ', label)  # normalize whitespace
         label = label.replace('..', '').replace('…', '').strip()  # remove dots
         
         # Skip obviously wrong entries
-        if (page == 0 or len(label) < 4 or 
+        if (page == 0 or len(label) < 3 or 
             'table of contents' in label.lower() or
             'contents' == label.lower() or
             label.lower().startswith('page ') or
@@ -107,7 +114,7 @@ def parse_toc_lines(text: str):
         generic_terms = ['introduction', 'overview', 'summary', 'conclusion', 'appendix']
         if any(term in label.lower() for term in generic_terms):
             # Only include if it has specific architectural/historic terms
-            if not any(term in label.lower() for term in ['style', 'criteria', 'context', 'theme', 'evaluation']):
+            if not any(term in label.lower() for term in ['style', 'criteria', 'context', 'theme', 'evaluation', 'greek', 'gothic', 'victorian']):
                 continue
         
         out.append((label, page))
