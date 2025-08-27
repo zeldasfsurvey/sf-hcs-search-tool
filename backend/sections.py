@@ -79,22 +79,29 @@ def search_all_sections(manifest, query: str):
             # Calculate relevance score
             score = 0.0
             
+            # Get the first line of the section label (cleaner)
+            first_line = section_label_lower.split('\n')[0].strip()
+            
             # Exact match gets highest score
-            if query_lower == section_label_lower:
+            if query_lower == first_line:
                 score = 10.0
-            # Full style name match
-            elif expanded_query in section_label_lower:
+            # Full style name match in first line
+            elif expanded_query in first_line:
                 score = 8.0
-            # Partial match
-            elif query_lower in section_label_lower:
+            # Partial match in first line
+            elif query_lower in first_line:
                 score = 5.0
-            # Style pattern match
-            elif any(pattern in section_label_lower for pattern in style_patterns.keys() if pattern in query_lower):
+            # Style pattern match in first line
+            elif any(pattern in first_line for pattern in style_patterns.keys() if pattern in query_lower):
                 score = 3.0
             
             # Boost evaluation criteria sections
-            if 'evaluation criteria' in section_label_lower:
+            if 'evaluation criteria' in first_line:
                 score += 2.0
+            
+            # Penalize very long/messy labels
+            if len(section_label_lower) > 200:
+                score -= 1.0
             
             # Only include results with meaningful matches
             if score > 0:

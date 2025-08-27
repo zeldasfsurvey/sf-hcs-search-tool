@@ -161,7 +161,14 @@ def main():
                         doc_title = result['doc_title']
                         doc_title = doc_title.replace('%20', ' ').replace('%26', '&').replace('%2D', '-')
                         st.markdown(f"**{doc_title}**")
-                        st.markdown(f"*{result['section_label']}* (Page {result['page']})")
+                        
+                        # Clean up the section label for display
+                        section_label = result['section_label']
+                        # Take only the first line and clean it up
+                        clean_label = section_label.split('\n')[0].strip()
+                        # Remove extra whitespace
+                        clean_label = ' '.join(clean_label.split())
+                        st.markdown(f"*{clean_label}* (Page {result['page']})")
                         
                     with col_button:
                         url = viewer_url(result['doc_file'], result['page'])
