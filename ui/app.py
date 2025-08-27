@@ -2,10 +2,10 @@ import streamlit as st
 import pandas as pd
 import os
 import json
+import sys
+from pathlib import Path
 
 # Import our new backend helpers
-import sys
-import os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from backend.links import viewer_url
 from backend.sections import load_manifest, find_page_of_label, nearest_section_for_page, search_all_sections
@@ -21,38 +21,66 @@ st.set_page_config(
 @st.cache_data
 def load_data():
     """Load manifest and frameworks data."""
-    # Check if we need to download PDFs and build manifest
-    if not os.path.exists("data/metadata/manifest.json"):
-        with st.spinner("Setting up search index... This may take a few minutes on first run."):
+    # Try to load existing manifest first
+    try:
+        manifest = load_manifest()
+        st.success("✅ Search index loaded successfully!")
+    except FileNotFoundError:
+        # Only try to build if we're not in a deployed environment
+        if os.getenv('STREAMLIT_SHARING_MODE') or os.getenv('STREAMLIT_CLOUD'):
+            st.error("""
+            🚨 **Deployment Issue**: Search index not found.
+            
+            **To fix this:**
+            1. Run `python -m backend.build_manifest` locally
+            2. Commit `data/metadata/manifest.json` to your repo  
+            3. Push to GitHub and redeploy
+            """)
+            return None, None
+        
+        # Try to build it (localhost only)
+        with st.spinner("Setting up search index for first time use... This may take a few minutes."):
             try:
-                # Import and run the setup functions
+                # Import the build functions
                 from backend.fetch_pdfs import fetch_all_pdfs
                 from backend.build_manifest import build_manifest
                 
-                # Download PDFs
-                st.info("Downloading PDF files...")
+                # Create directories
+                os.makedirs("data/pdfs", exist_ok=True)
+                os.makedirs("data/metadata", exist_ok=True)
+                os.makedirs("data/config", exist_ok=True)
+                
+                # Download PDFs first
+                st.info("📥 Downloading PDF files...")
                 fetch_all_pdfs()
                 
-                # Build manifest
-                st.info("Building search index...")
+                # Build the manifest
+                st.info("🔨 Building search index...")
                 build_manifest()
                 
-                st.success("Setup complete!")
+                # Try loading again
+                manifest = load_manifest()
+                st.success("✅ Setup complete!")
+                
             except Exception as e:
-                st.error(f"Setup failed: {e}")
+                st.error(f"❌ Setup failed: {e}")
+                st.info("💡 Try running `python -m backend.build_manifest` locally and committing the result.")
                 return None, None
     
-    try:
-        manifest = load_manifest()
-    except FileNotFoundError:
-        st.error("Manifest not found. Please try refreshing the page.")
-        return None, None
-    
+    # Load frameworks CSV
     frameworks_csv = "data/config/frameworks_template.csv"
     if os.path.exists(frameworks_csv):
         frameworks_df = pd.read_csv(frameworks_csv)
     else:
-        frameworks_df = pd.DataFrame()
+        # Create a minimal frameworks dataframe for demo
+        frameworks_df = pd.DataFrame({
+            'style': ['Gothic Revival', 'Art Deco', 'Streamline Moderne', 'Queen Anne', 'Italianate'],
+            'period_label': ['1848–1906', '1925–c.1936', '1935–1950', 'c.1880–1910', 'c.1860–1885'],
+            'year_start': [1848, 1925, 1935, 1880, 1860],
+            'year_end': [1906, 1936, 1950, 1910, 1885],
+            'doc_file': ['Early Settlement Era Styles (1848-1906)_Adopted_2025.pdf'] * 5,
+            'section_label': ['Evaluation Criteria: Gothic Revival'] * 5
+        })
     
     return manifest, frameworks_df
 
@@ -84,7 +112,8 @@ def resolve_style_year(manifest, frameworks_df, style: str, year: int):
     # Find the actual page
     page = find_page_of_label(manifest, doc_file, section_label)
     if not page:
-        return None
+        # Fallback to page 1 if we can't find the specific section
+        page = 1
     
     return {
         "doc_file": doc_file, 
@@ -102,8 +131,10 @@ def main():
     # Load data
     manifest, frameworks_df = load_data()
     if manifest is None:
-        st.info("Please wait while the app sets up... If this takes too long, try refreshing the page.")
-        return
+        st.stop()
+    
+    # Show stats
+    total_sections = sum(len(doc.get('sections', [])) for doc in manifest.values())
     
     # Two column layout
     col1, col2 = st.columns([2, 1])
@@ -143,36 +174,57 @@ def main():
                         if i < len(results) - 1:
                             st.divider()
             else:
-                st.info("No matching sections found. Try different keywords or browse by style + year.")
+                st.info("No matching sections found. Try different keywords or browse the document list below.")
+                
+                # Show all available sections as fallback
+                st.subheader("📚 All Available Sections")
+                for doc_file, doc_data in list(manifest.items())[:3]:  # Show first 3 docs
+                    with st.expander(f"📄 {doc_data['title']}"):
+                        for section in doc_data.get('sections', [])[:10]:  # Show first 10 sections
+                            col_text, col_btn = st.columns([4, 1])
+                            with col_text:
+                                st.write(f"• {section['label']} (p.{section['start']})")
+                            with col_btn:
+                                url = viewer_url(doc_file, section['start'])
+                                st.link_button("Open", url, key=f"{doc_file}_{section['start']}")
     
     with col2:
-        st.subheader("💡 Search Tips")
+        st.subheader("🎯 Quick Style Lookup")
         
-        st.markdown("""
-        **How to search effectively:**
-        
-        • **Exact style names work best**: "Art Deco", "Streamline Moderne"
-        • **Try variations**: "Gothic", "Victorian", "Modern"
-        • **Search for themes**: "Evaluation Criteria", "Historic Context"
-        • **Use specific terms**: "Italianate", "Queen Anne", "Second Empire"
-        
-        **Available styles include:**
-        • **Early Settlement**: Greek Revival, Folk Victorian, Gothic Revival
-        • **Victorian Era**: Italianate, Second Empire, Stick/Eastlake, Queen Anne  
-        • **Modernistic**: Art Deco, Streamline Moderne, International Style
-        • **Modern & Postmodern**: Late Modernism, Brutalism, Postmodernism, New Formalism
-        
-        **Search results show actual section headers from table of contents!**
-        """)
+        if not frameworks_df.empty:
+            # Style selection
+            available_styles = sorted(frameworks_df['style'].unique())
+            style = st.selectbox("Select architectural style:", [""] + available_styles)
+            
+            # Year input
+            year = st.number_input("Year built:", min_value=1800, max_value=2024, value=1900)
+            
+            if style:
+                dest = resolve_style_year(manifest, frameworks_df, style, year)
+                
+                if dest:
+                    st.success(f"Found: **{dest['style']}** ({dest['period']})")
+                    st.write(f"📄 Document: *{dest['doc_file'].replace('.pdf', '')}*")
+                    st.write(f"📍 Section: *{dest['section_label']}*")
+                    
+                    # Big open button
+                    url = viewer_url(dest['doc_file'], dest['page'])
+                    st.link_button(
+                        f"🚀 Open {dest['style']} (p.{dest['page']})",
+                        url,
+                        use_container_width=True,
+                        type="primary"
+                    )
+                else:
+                    st.warning(f"No evaluation criteria found for **{style}** in {year}. Try searching by keywords instead.")
         
         st.markdown("---")
         st.markdown("**📊 Current Status:**")
-        st.info(f"✅ **{len(manifest)} documents** loaded with **{sum(len(doc.get('sections', [])) for doc in manifest.values())} sections**")
+        st.info(f"✅ **{len(manifest)} documents** loaded")
+        st.info(f"✅ **{total_sections} sections** indexed")
         
         if not frameworks_df.empty:
-            st.success(f"✅ **{len(frameworks_df)} styles** configured for direct lookup")
-        else:
-            st.warning("⚠️ Framework mapping not loaded")
+            st.info(f"✅ **{len(frameworks_df)} styles** configured")
     
     # Footer
     st.markdown("---")
