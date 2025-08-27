@@ -186,7 +186,7 @@ def main():
                                 st.write(f"• {section['label']} (p.{section['start']})")
                             with col_btn:
                                 url = viewer_url(doc_file, section['start'])
-                                st.link_button("Open", url, key=f"{doc_file}_{section['start']}")
+                                st.link_button("Open", url)
     
     with col2:
         st.subheader("🎯 Quick Style Lookup")
