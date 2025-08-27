@@ -24,7 +24,6 @@ def load_data():
     # Try to load existing manifest first
     try:
         manifest = load_manifest()
-        st.success("✅ Search index loaded successfully!")
     except FileNotFoundError:
         # Only try to build if we're not in a deployed environment
         if os.getenv('STREAMLIT_SHARING_MODE') or os.getenv('STREAMLIT_CLOUD'):
@@ -125,8 +124,8 @@ def resolve_style_year(manifest, frameworks_df, style: str, year: int):
 
 # Main app
 def main():
-    st.title("🏛️ SF Historic Context Statements")
-    st.markdown("*Staff evaluation tool for architectural styles and historic contexts*")
+    st.title("🏛️ SF Survey Historic Context Statements")
+    st.markdown("*Search tool for staff evaluation*")
     
     # Load data
     manifest, frameworks_df = load_data()
