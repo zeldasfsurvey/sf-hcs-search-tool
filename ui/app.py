@@ -21,10 +21,31 @@ st.set_page_config(
 @st.cache_data
 def load_data():
     """Load manifest and frameworks data."""
+    # Check if we need to download PDFs and build manifest
+    if not os.path.exists("data/metadata/manifest.json"):
+        with st.spinner("Setting up search index... This may take a few minutes on first run."):
+            try:
+                # Import and run the setup functions
+                from backend.fetch_pdfs import fetch_all_pdfs
+                from backend.build_manifest import build_manifest
+                
+                # Download PDFs
+                st.info("Downloading PDF files...")
+                fetch_all_pdfs()
+                
+                # Build manifest
+                st.info("Building search index...")
+                build_manifest()
+                
+                st.success("Setup complete!")
+            except Exception as e:
+                st.error(f"Setup failed: {e}")
+                return None, None
+    
     try:
         manifest = load_manifest()
     except FileNotFoundError:
-        st.error("Manifest not found. Please run 'python -m backend.build_manifest' first.")
+        st.error("Manifest not found. Please try refreshing the page.")
         return None, None
     
     frameworks_csv = "data/config/frameworks_template.csv"
@@ -81,6 +102,7 @@ def main():
     # Load data
     manifest, frameworks_df = load_data()
     if manifest is None:
+        st.info("Please wait while the app sets up... If this takes too long, try refreshing the page.")
         return
     
     # Two column layout
@@ -140,7 +162,7 @@ def main():
         • **Modernistic**: Art Deco, Streamline Moderne, International Style
         • **Modern & Postmodern**: Late Modernism, Brutalism, Postmodernism, New Formalism
         
-        **Search results now show actual section headers from table of contents!**
+        **Search results show actual section headers from table of contents!**
         """)
         
         st.markdown("---")
