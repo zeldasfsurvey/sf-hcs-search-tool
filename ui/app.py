@@ -151,24 +151,29 @@ def main():
         if results:
             st.write(f"Found **{len(results)}** relevant sections:")
             
-            # Show results as cards with open buttons
-            for i, result in enumerate(results[:10]):  # Limit to top 10
+                            # Show results as cards with open buttons
+                for i, result in enumerate(results[:15]):  # Show more results
                 with st.container():
                     col_text, col_button = st.columns([3, 1])
                     
-                    with col_text:
-                        # Clean up the document title for display
-                        doc_title = result['doc_title']
-                        doc_title = doc_title.replace('%20', ' ').replace('%26', '&').replace('%2D', '-')
-                        st.markdown(f"**{doc_title}**")
-                        
-                        # Clean up the section label for display
-                        section_label = result['section_label']
-                        # Take only the first line and clean it up
-                        clean_label = section_label.split('\n')[0].strip()
-                        # Remove extra whitespace
-                        clean_label = ' '.join(clean_label.split())
-                        st.markdown(f"*{clean_label}* (Page {result['page']})")
+                                            with col_text:
+                            # Clean up the document title for display
+                            doc_title = result['doc_title']
+                            doc_title = doc_title.replace('%20', ' ').replace('%26', '&').replace('%2D', '-')
+                            
+                            # Add visual indicator for high-relevance results
+                            if result['score'] >= 8.0:
+                                st.markdown(f"**{doc_title}** 🎯")
+                            else:
+                                st.markdown(f"**{doc_title}**")
+                            
+                            # Clean up the section label for display
+                            section_label = result['section_label']
+                            # Take only the first line and clean it up
+                            clean_label = section_label.split('\n')[0].strip()
+                            # Remove extra whitespace
+                            clean_label = ' '.join(clean_label.split())
+                            st.markdown(f"*{clean_label}* (Page {result['page']})")
                         
                     with col_button:
                         url = viewer_url(result['doc_file'], result['page'])

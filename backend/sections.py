@@ -105,13 +105,15 @@ def search_all_sections(manifest, query: str):
             
             # Only include results with meaningful matches
             if score > 0:
-                results.append({
-                    "doc_file": doc_file,
-                    "doc_title": data["title"],
-                    "section_label": section["label"],
-                    "page": section["start"],
-                    "score": score
-                })
+                # Filter out very low relevance results for better user experience
+                if score >= 5.0:
+                    results.append({
+                        "doc_file": doc_file,
+                        "doc_title": data["title"],
+                        "section_label": section["label"],
+                        "page": section["start"],
+                        "score": score
+                    })
     
     # Sort by relevance score (highest first)
     return sorted(results, key=lambda x: (-x["score"], x["page"]))
