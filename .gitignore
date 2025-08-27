@@ -30,7 +30,6 @@ ENV/
 
 # Data files (keep config but ignore large PDFs and generated data)
 data/pdfs/
-data/metadata/manifest.json
 
 # IDE
 .vscode/
