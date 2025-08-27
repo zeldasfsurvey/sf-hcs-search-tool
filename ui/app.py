@@ -18,7 +18,7 @@ st.set_page_config(
 )
 
 # Load data
-@st.cache_data
+@st.cache_data(ttl=3600)  # Cache for 1 hour
 def load_data():
     """Load manifest and frameworks data."""
     # Try to load existing manifest first
@@ -133,6 +133,14 @@ def main():
     if manifest is None:
         st.stop()
     
+    # Debug: Check manifest
+    st.write(f"Debug: Manifest loaded with {len(manifest)} documents")
+    early_settlement_doc = 'Early%20Settlement%20Era%20Styles%20(1848-1906)_Adopted_2025.pdf'
+    if early_settlement_doc in manifest:
+        sections = manifest[early_settlement_doc]['sections']
+        greek_sections = [s for s in sections if 'greek' in s['label'].lower()]
+        st.write(f"Debug: Early Settlement doc has {len(greek_sections)} Greek sections")
+    
     # Show stats
     total_sections = sum(len(doc.get('sections', [])) for doc in manifest.values())
     
@@ -147,6 +155,11 @@ def main():
     if query:
         # Search across all sections with improved logic
         results = search_all_sections(manifest, query)
+        
+        # Debug info (remove this after fixing)
+        st.write(f"Debug: Found {len(results)} results for '{query}'")
+        if len(results) > 0:
+            st.write(f"Debug: First result - {results[0]['doc_title'][:50]}...")
         
         if results:
             st.write(f"Found **{len(results)}** relevant sections:")
