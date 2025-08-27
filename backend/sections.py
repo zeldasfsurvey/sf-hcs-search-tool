@@ -106,7 +106,7 @@ def search_all_sections(manifest, query: str):
             # Only include results with meaningful matches
             if score > 0:
                 # Filter out very low relevance results for better user experience
-                if score >= 5.0:
+                if score >= 3.0:  # Lowered threshold to catch more results
                     results.append({
                         "doc_file": doc_file,
                         "doc_title": data["title"],

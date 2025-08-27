@@ -18,7 +18,7 @@ st.set_page_config(
 )
 
 # Load data
-@st.cache_data(ttl=3600)  # Cache for 1 hour
+@st.cache_data(ttl=60)  # Cache for 1 minute to force refresh
 def load_data():
     """Load manifest and frameworks data."""
     # Try to load existing manifest first
@@ -132,6 +132,15 @@ def main():
     manifest, frameworks_df = load_data()
     if manifest is None:
         st.stop()
+    
+    # Check if manifest has the right content
+    early_doc = 'Early%20Settlement%20Era%20Styles%20(1848-1906)_Adopted_2025.pdf'
+    if early_doc in manifest:
+        sections = manifest[early_doc]['sections']
+        greek_sections = [s for s in sections if 'greek' in s['label'].lower()]
+        if len(greek_sections) == 0:
+            st.error("⚠️ Manifest appears to be outdated. Please redeploy the app.")
+            st.stop()
     
 
     
