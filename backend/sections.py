@@ -65,11 +65,54 @@ def search_all_sections(manifest, query: str):
         'postmodern': 'postmodern'
     }
     
-    # Check if query matches a style pattern
+    # Common architect names for better matching
+    architect_names = {
+        'anderson': 'Anderson',
+        'christian': 'Christian',
+        'christian anderson': 'Christian Anderson',
+        'anderson christian': 'Christian Anderson',
+        'denck': 'Denck',
+        'edmund': 'Edmund',
+        'edmund denck': 'Edmund Denck',
+        'denck edmund': 'Edmund Denck',
+        'august': 'August',
+        'august denck': 'August Denck',
+        'denck august': 'August Denck',
+        'daniels': 'Daniels',
+        'dillman': 'Dillman',
+        'daniels dillman': 'Daniels & Dillman',
+        'dillman daniels': 'Daniels & Dillman',
+        'osmont': 'Osmont',
+        'daniels osmont': 'Daniels & Osmont',
+        'osmont daniels': 'Daniels & Osmont',
+        'wilhelm': 'Wilhelm',
+        'daniels wilhelm': 'Daniels & Wilhelm',
+        'wilhelm daniels': 'Daniels & Wilhelm',
+        'mclaren': 'McLaren',
+        'donald': 'Donald',
+        'donald mclaren': 'Donald McLaren',
+        'mclaren donald': 'Donald McLaren',
+        'mc dougall': 'McDougall',
+        'mcdougall': 'McDougall',
+        'barnett': 'Barnett',
+        'barnett mc dougall': 'Barnett McDougall',
+        'mc dougall barnett': 'Barnett McDougall',
+        'marquis': 'Marquis',
+        'mc dougall marquis': 'McDougall & Marquis',
+        'marquis mc dougall': 'McDougall & Marquis'
+    }
+    
+    # Check if query matches a style pattern or architect name
     expanded_query = query_lower
     for pattern, full_style in style_patterns.items():
         if pattern in query_lower:
             expanded_query = full_style
+            break
+    
+    # Check if query matches an architect name
+    for pattern, full_name in architect_names.items():
+        if pattern in query_lower:
+            expanded_query = full_name
             break
     
     for doc_file, data in manifest.items():
@@ -94,10 +137,20 @@ def search_all_sections(manifest, query: str):
             # Style pattern match in first line
             elif any(pattern in first_line for pattern in style_patterns.keys() if pattern in query_lower):
                 score = 3.0
+            # Architect name pattern match (handle "Last, First" format)
+            elif any(name.lower() in first_line for name in architect_names.values() if name.lower() in query_lower):
+                score = 4.0
+            # Individual name part match (for searching just first or last name)
+            elif any(part in first_line for part in query_lower.split() if len(part) > 2):
+                score = 2.0
             
             # Boost evaluation criteria sections
             if 'evaluation criteria' in first_line:
                 score += 2.0
+            
+            # Boost architect name matches in biographical documents
+            if 'bios_' in doc_file.lower() and any(name in first_line for name in architect_names.values()):
+                score += 1.5
             
             # Penalize very long/messy labels
             if len(section_label_lower) > 200:
