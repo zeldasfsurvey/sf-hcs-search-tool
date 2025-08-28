@@ -169,6 +169,40 @@ def find_toc_pages(doc, max_pages=10):
     
     return toc_pages if toc_pages else list(range(min(7, len(doc))))
 
+def is_bio_document(filename):
+    """Check if this is a biographical document."""
+    return 'bios_' in filename.lower()
+
+def parse_bio_document(doc):
+    """Parse biographical documents to find architect entries and their page numbers."""
+    bio_sections = []
+    
+    # Scan through pages to find architect names and their corresponding pages
+    for page_num in range(len(doc)):
+        text = extract_pdf_text_safely(doc, page_num)
+        if not text:
+            continue
+        
+        # Look for patterns like "Name, First" or "Name, First Middle"
+        lines = text.split('\n')
+        for line in lines:
+            line = line.strip()
+            if not line or len(line) < 3:
+                continue
+            
+            # Pattern: "Last, First" or "Last, First Middle"
+            # This matches architect names in bio documents
+            if re.match(r'^[A-Z][a-z]+, [A-Z]', line):
+                # Clean up the name
+                name = line.split(',')[0].strip()
+                if len(name) > 2:  # Avoid very short names
+                    bio_sections.append({
+                        "label": line,
+                        "start": page_num + 1  # Convert to 1-based page numbers
+                    })
+    
+    return bio_sections
+
 def build_manifest():
     """Build the manifest by scanning all PDFs for sections and page numbers."""
     print("🏗️  Building sections manifest...")
@@ -220,6 +254,16 @@ def build_manifest():
                     sections.append({"label": label, "start": int(start)})
                 
                 print(f"    ✅ Extracted {len(sections)} sections from ToC")
+            
+            # Special handling for bio documents
+            if is_bio_document(filename):
+                print(f"    🔍 Special handling for bio document...")
+                bio_sections = parse_bio_document(doc)
+                if bio_sections:
+                    sections = bio_sections  # Replace with bio sections
+                    print(f"    ✅ Extracted {len(bio_sections)} bio sections")
+                else:
+                    print(f"    ⚠️ No bio sections found, using regular parsing")
 
             # Method 2: Fallback - scan all pages for headings
             if not sections:
