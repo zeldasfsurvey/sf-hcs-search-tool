@@ -188,8 +188,12 @@ def main():
                         st.markdown(f"*{clean_label}* (Page {result['page']})")
                     
                     with col_button:
-                        url = viewer_url(result['doc_file'], result['page'])
-                        st.link_button("📖 Open Section", url, use_container_width=True)
+                        # Skip bio documents for now since they have broken links
+                        if 'Bios_' in result['doc_file']:
+                            st.write("🔗 PDF link unavailable")
+                        else:
+                            url = viewer_url(result['doc_file'], result['page'])
+                            st.link_button("📖 Open Section", url, use_container_width=True)
                     
                     if i < len(results) - 1:
                         st.divider()

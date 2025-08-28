@@ -99,7 +99,9 @@ def search_all_sections(manifest, query: str):
         'mc dougall barnett': 'Barnett McDougall',
         'marquis': 'Marquis',
         'mc dougall marquis': 'McDougall & Marquis',
-        'marquis mc dougall': 'McDougall & Marquis'
+        'marquis mc dougall': 'McDougall & Marquis',
+        'mclaren': 'McDougall',  # Common misspelling
+        'donald mclaren': 'Donald McDougall'
     }
     
     # Check if query matches a style pattern or architect name
