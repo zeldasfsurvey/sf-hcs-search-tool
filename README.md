@@ -1,6 +1,6 @@
 # SF Historic Context Statements Search Tool
 
-A powerful search tool for San Francisco Historic Context Statements (HCS) that allows staff to quickly find evaluation criteria and architectural style information.
+A search tool for San Francisco Historic Context Statements (HCS) that allows staff to quickly find evaluation criteria and architectural style information.
 
 ## Features
 
@@ -35,29 +35,6 @@ A powerful search tool for San Francisco Historic Context Statements (HCS) that 
 - New Formalism
 - Third Bay Tradition
 
-## Quick Start
-
-1. **Install dependencies**:
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-2. **Download PDFs** (from [sfsurvey-hcs-pdfs](https://github.com/zeldasfsurvey/sfsurvey-hcs-pdfs)):
-   ```bash
-   python backend/fetch_pdfs.py
-   ```
-
-3. **Build search index**:
-   ```bash
-   python backend/build_manifest.py
-   ```
-
-4. **Run the app**:
-   ```bash
-   streamlit run ui/app.py
-   ```
-
-5. **Open in browser**: http://localhost:8501
 
 ## Usage
 
@@ -112,10 +89,5 @@ PDF files are sourced from the [sfsurvey-hcs-pdfs](https://github.com/zeldasfsur
 - Modify `LABEL_PATTERNS` in `backend/build_manifest.py` to capture different section types
 - Update search logic in `backend/sections.py` for different matching strategies
 
-## License
-
-This project is developed for the San Francisco Historic Context Survey.
-
 ## Contributing
-
-For questions or contributions, please contact the SF Historic Context Survey team.
+For questions or contributions, please contact the SF Survey team.
