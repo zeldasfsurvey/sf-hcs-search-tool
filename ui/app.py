@@ -18,7 +18,7 @@ st.set_page_config(
 )
 
 # Load data
-@st.cache_data(ttl=60)  # Cache for 1 minute to force refresh
+@st.cache_data(ttl=30)  # Cache for 30 seconds to force refresh
 def load_data():
     """Load manifest and frameworks data."""
     # Try to load existing manifest first
@@ -141,6 +141,14 @@ def main():
             st.error("⚠️ Manifest appears to be outdated. Please redeploy the app.")
             st.stop()
     
+    # Debug: Check bio documents
+    bio_docs = [k for k in manifest.keys() if 'Bios_' in k]
+    st.write(f"Debug: Found {len(bio_docs)} bio documents")
+    if len(bio_docs) > 0:
+        bio_sections = manifest[bio_docs[0]]['sections']
+        anderson_sections = [s for s in bio_sections if 'anderson' in s['label'].lower()]
+        st.write(f"Debug: {bio_docs[0]} has {len(anderson_sections)} Anderson sections")
+    
 
     
     # Show stats
@@ -158,7 +166,10 @@ def main():
         # Search across all sections with improved logic
         results = search_all_sections(manifest, query)
         
-
+        # Debug info
+        st.write(f"Debug: Found {len(results)} results for '{query}'")
+        if len(results) > 0:
+            st.write(f"Debug: First result - {results[0]['doc_title'][:50]}...")
         
         if results:
             st.write(f"Found **{len(results)}** relevant sections:")
