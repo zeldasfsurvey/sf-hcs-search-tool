@@ -186,8 +186,14 @@ def main():
                         st.markdown(f"*{clean_label}* (Page {result['page']})")
                     
                     with col_button:
-                        url = viewer_url(result['doc_file'], result['page'])
-                        st.link_button("📖 Open Section", url, use_container_width=True)
+                        # For bio documents, check if the PDF is accessible
+                        if 'Bios_' in result['doc_file']:
+                            # Try to open the bio document directly since some GitHub links are corrupted
+                            bio_url = f"https://raw.githubusercontent.com/zeldasfsurvey/sfsurvey-hcs-pdfs/main/{result['doc_file']}"
+                            st.link_button("📖 Open Bio PDF", bio_url, use_container_width=True)
+                        else:
+                            url = viewer_url(result['doc_file'], result['page'])
+                            st.link_button("📖 Open Section", url, use_container_width=True)
                     
                     if i < len(results) - 1:
                         st.divider()
