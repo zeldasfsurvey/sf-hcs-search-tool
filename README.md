@@ -4,10 +4,9 @@ A search tool for San Francisco Historic Context Statements (HCS) that allows st
 
 ## Features
 
-- **🔍 Smart Search**: Search across all HCS documents by architectural style, theme, or keywords
-- **📖 Direct PDF Links**: Open sections directly in PDF.js viewer with page navigation
-- **🏛️ Comprehensive Coverage**: Includes Early Settlement, Victorian, Modernistic, and Modern & Postmodern styles
-- **⚡ Fast Results**: Pre-parsed manifest with 1,000+ sections across 13 documents
+- **Smart Search**: Search across all HCS documents by architectural style, theme, or keywords
+- **Direct PDF Links**: Open sections directly in PDF.js viewer with page navigation
+- **Fast Results**: Pre-parsed tool 1,000+ sections across 13 documents
 
 ## Available Styles
 
