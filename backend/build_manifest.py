@@ -200,6 +200,26 @@ def parse_bio_document(doc):
                         "label": line,
                         "start": page_num + 1  # Convert to 1-based page numbers
                     })
+            
+            # Pattern: "See also: Name, Name" or "See also: Name + Name"
+            # This captures cross-references to other architects/firms
+            elif line.startswith('See also:') and len(line) > 10:
+                # Extract the names after "See also:"
+                names_part = line[10:].strip()
+                if names_part and len(names_part) > 3:
+                    bio_sections.append({
+                        "label": line,
+                        "start": page_num + 1  # Convert to 1-based page numbers
+                    })
+            
+            # Pattern: "Name + Name" (firm names)
+            # This captures firm names like "Anshen + Allen"
+            elif re.search(r'[A-Z][a-z]+\s+\+\s+[A-Z][a-z]+', line):
+                if len(line) > 5 and not line.startswith('See also:'):
+                    bio_sections.append({
+                        "label": line,
+                        "start": page_num + 1  # Convert to 1-based page numbers
+                    })
     
     return bio_sections
 

@@ -134,32 +134,53 @@ def search_all_sections(manifest, query: str):
             # Get the first line of the section label (cleaner)
             first_line = section_label_lower.split('\n')[0].strip()
             
-            # Exact match gets highest score
-            if query_lower == first_line:
-                score = 10.0
-            # Full style name match in first line
-            elif any(expanded_query in first_line for expanded_query in expanded_queries):
-                score = 8.0
-            # Partial match in first line
-            elif query_lower in first_line:
-                score = 5.0
-            # Style pattern match in first line
-            elif any(pattern in first_line for pattern in style_patterns.keys() if pattern in query_lower):
-                score = 3.0
-            # Architect name pattern match (handle "Last, First" format)
-            elif any(name.lower() in first_line for name in architect_names.values() if name.lower() in query_lower):
-                score = 4.0
-            # Individual name part match (for searching just first or last name)
-            elif any(part in first_line for part in query_lower.split() if len(part) > 2):
-                score = 2.0
+            # For bio documents, focus on the main title (first line)
+            if 'bios_' in doc_file.lower():
+                # Exact match in main title gets highest score
+                if query_lower == first_line:
+                    score = 10.0
+                # Query is contained in main title (but not in long descriptive text)
+                elif query_lower in first_line and len(first_line) < 50:
+                    score = 9.0
+                # Query is contained in main title but longer text
+                elif query_lower in first_line and len(first_line) < 100:
+                    score = 7.0
+                # Query is contained in very long text (likely not a main title)
+                elif query_lower in first_line and len(first_line) >= 100:
+                    score = 3.0
+                # Expanded query matches main title
+                elif any(expanded_query in first_line for expanded_query in expanded_queries):
+                    score = 6.0
+                # Individual name parts in main title
+                elif any(part in first_line for part in query_lower.split() if len(part) > 2):
+                    score = 4.0
+                # Very low score for other matches to filter them out
+                else:
+                    score = 1.0
+            else:
+                # For non-bio documents, use existing logic
+                # Exact match gets highest score
+                if query_lower == first_line:
+                    score = 10.0
+                # Full style name match in first line
+                elif any(expanded_query in first_line for expanded_query in expanded_queries):
+                    score = 8.0
+                # Partial match in first line
+                elif query_lower in first_line:
+                    score = 5.0
+                # Style pattern match in first line
+                elif any(pattern in first_line for pattern in style_patterns.keys() if pattern in query_lower):
+                    score = 3.0
+                # Architect name pattern match (handle "Last, First" format)
+                elif any(name.lower() in first_line for name in architect_names.values() if name.lower() in query_lower):
+                    score = 4.0
+                # Individual name part match (for searching just first or last name)
+                elif any(part in first_line for part in query_lower.split() if len(part) > 2):
+                    score = 2.0
             
             # Boost evaluation criteria sections
             if 'evaluation criteria' in first_line:
                 score += 2.0
-            
-            # Boost architect name matches in biographical documents
-            if 'bios_' in doc_file.lower() and any(name in first_line for name in architect_names.values()):
-                score += 1.5
             
             # Penalize very long/messy labels
             if len(section_label_lower) > 200:
@@ -167,15 +188,26 @@ def search_all_sections(manifest, query: str):
             
             # Only include results with meaningful matches
             if score > 0:
-                # Filter out very low relevance results for better user experience
-                if score >= 3.0:  # Lowered threshold to catch more results
-                    results.append({
-                        "doc_file": doc_file,
-                        "doc_title": data["title"],
-                        "section_label": section["label"],
-                        "page": section["start"],
-                        "score": score
-                    })
+                # For bio documents, only show high-quality matches
+                if 'bios_' in doc_file.lower():
+                    if score >= 8.0:  # Very high threshold for bio documents - only main titles
+                        results.append({
+                            "doc_file": doc_file,
+                            "doc_title": data["title"],
+                            "section_label": section["label"],
+                            "page": section["start"],
+                            "score": score
+                        })
+                else:
+                    # For other documents, use existing threshold
+                    if score >= 3.0:
+                        results.append({
+                            "doc_file": doc_file,
+                            "doc_title": data["title"],
+                            "section_label": section["label"],
+                            "page": section["start"],
+                            "score": score
+                        })
     
     # Sort by relevance score (highest first)
     return sorted(results, key=lambda x: (-x["score"], x["page"]))
