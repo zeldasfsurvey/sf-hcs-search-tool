@@ -1,4 +1,4 @@
-https://raw.githubusercontent.com/zeldasfsurvey/sfsurvey-hcs-pdfs/main/Bios_ABC.pdf
+https://raw.githubusercontent.com/zeldasfsurvey/sfsurvey-hcs-pdfs/main/Bios_ABC_correct.pdf
 https://raw.githubusercontent.com/zeldasfsurvey/sfsurvey-hcs-pdfs/main/Bios_DEF.pdf
 https://raw.githubusercontent.com/zeldasfsurvey/sfsurvey-hcs-pdfs/main/Bios_GHI.pdf
 https://raw.githubusercontent.com/zeldasfsurvey/sfsurvey-hcs-pdfs/main/Bios_JKL.pdf

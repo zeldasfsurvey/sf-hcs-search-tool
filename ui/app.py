@@ -186,10 +186,16 @@ def main():
                         st.markdown(f"*{clean_label}* (Page {result['page']})")
                     
                     with col_button:
-                        # For bio documents, check if the PDF is accessible
+                        # For bio documents, use the correct filename and PDF.js viewer
                         if 'Bios_' in result['doc_file']:
-                            # Try to open the bio document directly since some GitHub links are corrupted
-                            bio_url = f"https://raw.githubusercontent.com/zeldasfsurvey/sfsurvey-hcs-pdfs/main/{result['doc_file']}"
+                            # Fix the filename for Bios_ABC
+                            if result['doc_file'] == 'Bios_ABC.pdf':
+                                bio_file = 'Bios_ABC_correct.pdf'
+                            else:
+                                bio_file = result['doc_file']
+                            
+                            # Use PDF.js viewer like other documents
+                            bio_url = viewer_url(bio_file, result['page'])
                             st.link_button("📖 Open Bio PDF", bio_url, use_container_width=True)
                         else:
                             url = viewer_url(result['doc_file'], result['page'])
