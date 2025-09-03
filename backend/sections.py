@@ -106,16 +106,23 @@ def search_all_sections(manifest, query: str):
     
     # Check if query matches a style pattern or architect name
     expanded_query = query_lower
+    expanded_queries = [query_lower]  # Start with original query
+    
     for pattern, full_style in style_patterns.items():
         if pattern in query_lower:
-            expanded_query = full_style
+            expanded_queries.append(full_style.lower())
             break
     
     # Check if query matches an architect name
     for pattern, full_name in architect_names.items():
         if pattern in query_lower:
-            expanded_query = full_name
+            expanded_queries.append(full_name.lower())
             break
+    
+    # Also add any architect names that contain the query
+    for pattern, full_name in architect_names.items():
+        if query_lower in pattern or query_lower in full_name.lower():
+            expanded_queries.append(full_name.lower())
     
     for doc_file, data in manifest.items():
         for section in data.get("sections", []):
@@ -131,7 +138,7 @@ def search_all_sections(manifest, query: str):
             if query_lower == first_line:
                 score = 10.0
             # Full style name match in first line
-            elif expanded_query in first_line:
+            elif any(expanded_query in first_line for expanded_query in expanded_queries):
                 score = 8.0
             # Partial match in first line
             elif query_lower in first_line:

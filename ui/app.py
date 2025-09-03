@@ -141,14 +141,6 @@ def main():
             st.error("⚠️ Manifest appears to be outdated. Please redeploy the app.")
             st.stop()
     
-    # Debug: Check bio documents
-    bio_docs = [k for k in manifest.keys() if 'Bios_' in k]
-    st.write(f"Debug: Found {len(bio_docs)} bio documents")
-    if len(bio_docs) > 0:
-        bio_sections = manifest[bio_docs[0]]['sections']
-        anderson_sections = [s for s in bio_sections if 'anderson' in s['label'].lower()]
-        st.write(f"Debug: {bio_docs[0]} has {len(anderson_sections)} Anderson sections")
-    
 
     
     # Show stats
@@ -165,11 +157,6 @@ def main():
     if query:
         # Search across all sections with improved logic
         results = search_all_sections(manifest, query)
-        
-        # Debug info
-        st.write(f"Debug: Found {len(results)} results for '{query}'")
-        if len(results) > 0:
-            st.write(f"Debug: First result - {results[0]['doc_title'][:50]}...")
         
         if results:
             st.write(f"Found **{len(results)}** relevant sections:")
@@ -199,12 +186,8 @@ def main():
                         st.markdown(f"*{clean_label}* (Page {result['page']})")
                     
                     with col_button:
-                        # Skip bio documents for now since they have broken links
-                        if 'Bios_' in result['doc_file']:
-                            st.write("🔗 PDF link unavailable")
-                        else:
-                            url = viewer_url(result['doc_file'], result['page'])
-                            st.link_button("📖 Open Section", url, use_container_width=True)
+                        url = viewer_url(result['doc_file'], result['page'])
+                        st.link_button("📖 Open Section", url, use_container_width=True)
                     
                     if i < len(results) - 1:
                         st.divider()
